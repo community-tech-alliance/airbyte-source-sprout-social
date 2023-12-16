@@ -65,6 +65,7 @@ class SproutSocialStream(HttpStream, ABC):
         """
         TODO: Override this method to define how a response is parsed.
         :return an iterable containing each record in the response
+        I think I copied this from another sync... may need work.
         """
         response_json = response.json()
         yield from response_json
@@ -96,8 +97,9 @@ class ClientMetadata(SproutSocialStream):
     
 # class CustomerProfiles(SproutSocialStream):
 #     primary_key = "customer_profile_id"
-#     """This request needs to grab customer_id from ClientMetadata returned
-#     will be received from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+#     """This endpoint retrieves data from the `{customer_id}/metadata/customer` endpoint as a get request.   
+#     The request needs: 
+#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
 #     def path(
 #         self, stream_state: Mapping[str, Any] = None, 
@@ -105,13 +107,14 @@ class ClientMetadata(SproutSocialStream):
 #         next_page_token: Mapping[str, Any] = None,
 #         **kwargs,
 #     ) -> str:
-#         endpoint = f"{customer_id}/metadata/client"
+#         endpoint = f"{customer_id}/metadata/customer"
 #         return endpoint
     
 # class CustomerTags(SproutSocialStream):
 #     primary_key = "tag_id"
-#     """This request needs to grab customer_id from ClientMetadata returned
-#     will be received from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+#     """This endpoint retrieves data from the `{customer_id}/metadata/customer/tags` endpoint as a get request.   
+#     The request needs: 
+#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
 #     def path(
 #         self, stream_state: Mapping[str, Any] = None, 
@@ -124,8 +127,10 @@ class ClientMetadata(SproutSocialStream):
     
 # class CustomerGroups(SproutSocialStream):
 #     primary_key = "group_id"
-#     """This request needs to grab customer_id from ClientMetadata returned
-#     will be received from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+#     """This endpoint retrieves data from the `{customer_id}/metadata/customer/groups` endpoint as a get request.   
+#     The request needs: 
+#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+
 
 #     def path(
 #         self, stream_state: Mapping[str, Any] = None, 
@@ -138,8 +143,9 @@ class ClientMetadata(SproutSocialStream):
     
 # class CustomerUsers(SproutSocialStream):
 #     primary_key = "group_id"
-#     """This request needs to grab customer_id from ClientMetadata returned
-#     will be received from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+#     """This endpoint retrieves data from the `{customer_id}/metadata/customer/users` endpoint as a get request.   
+#     The request needs: 
+#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
 #     def path(
 #         self, stream_state: Mapping[str, Any] = None, 
