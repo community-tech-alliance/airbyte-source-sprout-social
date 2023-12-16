@@ -34,7 +34,7 @@ class SproutSocialStream(HttpStream, ABC):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> Mapping[str, Any]:
-        return {"Authorization": f"Bearer {self.config["api_key"]}" }
+        return {"Authorization": f"Bearer {self.config[{api_key}]}" }
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         """Pagination for most endpoints (except messages) is acheived by incrementing `/page/#` in the request URL.
@@ -66,7 +66,8 @@ class SproutSocialStream(HttpStream, ABC):
         TODO: Override this method to define how a response is parsed.
         :return an iterable containing each record in the response
         """
-        yield {}
+        response_json = response.json()
+        yield from response_json
 
 
 class ClientMetadata(SproutSocialStream):
