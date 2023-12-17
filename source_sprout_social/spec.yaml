@@ -5,8 +5,10 @@ connectionSpecification:
   type: object
   required:
     - api_key
+  additionalProperties: false
   properties:
-    # 'TODO: This schema defines the configuration required for the source. This usually involves metadata such as database and/or authentication information.':
-    TODO:
+    api_key:
       type: string
-      description: describe me
+      airbyte_secret: true,
+      order: 1,
+      description: "API key used for authenticating to Sprout Social API."
