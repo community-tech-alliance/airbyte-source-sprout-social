@@ -21,7 +21,7 @@ The config json contains key-value pairs for any credentials needed to connect. 
 
 To test the `read` command, which actually reads data, you need to also pass in a path to a file containing the "configured catalog," which defines the streams and their configurations to be run. This is a JSON configuration file that defines the streams to be read from the source, along with any stream-specific configurations (like if the data should be synced with full refresh or incremental updates).
 
-You can use different JSON files to test out different streams individually. Here's an example of a catalog file that only tests a single stream, called "customers":
+You can use different JSON files to test out different streams individually. Here's an example of a catalog file that tests two streams, `client_metadata` and `customer_profiles`:
 
 ```text
 {
@@ -34,10 +34,18 @@ You can use different JSON files to test out different streams individually. Her
       },
       "sync_mode": "full_refresh",
       "destination_sync_mode": "overwrite"
+    },
+    {
+      "stream": {
+        "name": "customer_profiles",
+        "json_schema": {},
+        "supported_sync_modes": ["full_refresh"]
+      },
+      "sync_mode": "full_refresh",
+      "destination_sync_mode": "overwrite"
     }
   ]
 }
-
 ```
 
 ## Prerequisite 3: Schema files
