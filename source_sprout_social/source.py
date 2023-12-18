@@ -28,6 +28,27 @@ class SproutSocialStream(HttpStream, ABC):
         self.url_base = "https://api.sproutsocial.com/v1/"
         self.page = 1
 
+    def _get_customer_id(self):
+        """
+        Given an API key, make a request to the ClientMetadata endpoint to return the Customer ID. This is required for all other endpoints.
+        ASSUMES ONE CUSTOMER_ID PER API KEY, is that correct @kane? Or does this need to return a list?
+
+        This method can be called in streams that require a customer_id, for example when creating a CustomerProfiles stream:
+
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/metadata/customer"
+
+        """
+
+        client_metadata_endpoint = "metadata/client"
+        client_metadata_url = self.url_base + client_metadata_endpoint
+        headers = {"Authorization": f"Bearer {self.config['api_key']}" }
+        customer_id = requests.get(client_metadata_url, headers=headers).json()["data"][0]["customer_id"]
+        # if this needs to return a list, then we need to do fancier things with stream slices (like in that Airbyte thread you found)
+        # but if we can assume 1 customer ID per API key, then this should work fine?
+
+        return customer_id
+
     def request_headers(
         self,
         stream_state: Mapping[str, Any],
@@ -67,7 +88,9 @@ class SproutSocialStream(HttpStream, ABC):
         :return an iterable containing each record in the response
         I think I copied this from another sync... may need work.
         """
-        response_json = response.json()
+
+        # NOTE FOR KANE: Seems like all the responses from this API put the data in a "data" key, so this method should grab data from that key.
+        response_json = response.json()["data"]
         yield from response_json
 
 
@@ -83,8 +106,11 @@ class ClientMetadata(SproutSocialStream):
         endpoint = "metadata/client"
         return endpoint
     
-class ClientMetadata(SproutSocialStream):
-    primary_key = "customer_id"
+class CustomerProfiles(SproutSocialStream):
+    primary_key = "customer_profile_id"
+    """This endpoint retrieves data from the `{customer_id}/metadata/customer` endpoint as a get request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
     def path(
         self, stream_state: Mapping[str, Any] = None, 
@@ -92,23 +118,11 @@ class ClientMetadata(SproutSocialStream):
         next_page_token: Mapping[str, Any] = None,
         **kwargs,
     ) -> str:
-        endpoint = "metadata/client"
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/metadata/customer"
+        
         return endpoint
-    
-# class CustomerProfiles(SproutSocialStream):
-#     primary_key = "customer_profile_id"
-#     """This endpoint retrieves data from the `{customer_id}/metadata/customer` endpoint as a get request.   
-#     The request needs: 
-#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
-
-#     def path(
-#         self, stream_state: Mapping[str, Any] = None, 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
-#         endpoint = f"{customer_id}/metadata/customer"
-#         return endpoint
     
 # class CustomerTags(SproutSocialStream):
 #     primary_key = "tag_id"
@@ -223,10 +237,8 @@ class SourceSproutSocial(AbstractSource):
         :param logger:  logger object
         :return Tuple[bool, any]: (True, None) if the input config can be used to connect to the API successfully, (False, error) otherwise.
         """
-        api_key = config['api_key']
-        connection_url = f"https://api.sproutsocial.com/v1/metadata"
-        api_key = self.config['api_key']
-        headers = {'Authorization': f"Bearer {self.config['api_key']}"}
+        connection_url = f"https://api.sproutsocial.com/v1/metadata/client"
+        headers = {'Authorization': f"Bearer {config['api_key']}"}
         try:
             response = requests.get(url=connection_url, headers=headers)
             response.raise_for_status()
@@ -240,6 +252,13 @@ class SourceSproutSocial(AbstractSource):
 
         :param config: A Mapping of the user input configuration as defined in the connector spec.
         """
-        # TODO remove the authenticator if not required.
-        auth = TokenAuthenticator(token="api_key")  # Oauth2Authenticator is also available if you need oauth support
-        return [ClientMetadata(authenticator=auth)]
+
+        return [ClientMetadata(config=config),
+                CustomerProfiles(config=config),
+                # CustomerTags(config=config),
+                # CustomerGroups(config=config),
+                # CustomerUsers(config=config),
+                # CustomerProfileAnalytics(config=config),
+                # ProfileAnalytics(config=config),
+                # PostAnalytics(config=config),]
+        ]
