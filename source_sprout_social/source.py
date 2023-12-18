@@ -158,23 +158,26 @@ class CustomerGroups(SproutSocialStream):
         
         customer_id = self._get_customer_id()
         endpoint = f"{customer_id}/metadata/customer/groups"
-        
+
         return endpoint
     
-# class CustomerUsers(SproutSocialStream):
-#     primary_key = "group_id"
-#     """This endpoint retrieves data from the `{customer_id}/metadata/customer/users` endpoint as a get request.   
-#     The request needs: 
-#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
+class CustomerUsers(SproutSocialStream):
+    primary_key = "id"
+    """This endpoint retrieves data from the `{customer_id}/metadata/customer/users` endpoint as a get request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
-#     def path(
-#         self, stream_state: Mapping[str, Any] = None, 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
-#         endpoint = f"{customer_id}/metadata/customer/users"
-#         return endpoint
+    def path(
+        self, stream_state: Mapping[str, Any] = None, 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/metadata/customer/users"
+
+        return endpoint
     
 # class CustomerProfileAnalytics(SproutSocialStream):
 #     primary_key = "customer_profile_id"
@@ -263,7 +266,7 @@ class SourceSproutSocial(AbstractSource):
                 CustomerProfiles(config=config),
                 CustomerTags(config=config),
                 CustomerGroups(config=config),
-                # CustomerUsers(config=config),
+                CustomerUsers(config=config),
                 # CustomerProfileAnalytics(config=config),
                 # ProfileAnalytics(config=config),
                 # PostAnalytics(config=config),]
