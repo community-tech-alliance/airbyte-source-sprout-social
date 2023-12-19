@@ -44,8 +44,6 @@ class SproutSocialStream(HttpStream, ABC):
         client_metadata_url = self.url_base + client_metadata_endpoint
         headers = {"Authorization": f"Bearer {self.config['api_key']}" }
         customer_id = requests.get(client_metadata_url, headers=headers).json()["data"][0]["customer_id"]
-        # if this needs to return a list, then we need to do fancier things with stream slices (like in that Airbyte thread you found)
-        # but if we can assume 1 customer ID per API key, then this should work fine?
 
         return customer_id
 
@@ -84,12 +82,9 @@ class SproutSocialStream(HttpStream, ABC):
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         """
-        TODO: Override this method to define how a response is parsed.
         :return an iterable containing each record in the response
-        I think I copied this from another sync... may need work.
         """
 
-        # NOTE FOR KANE: Seems like all the responses from this API put the data in a "data" key, so this method should grab data from that key.
         response_json = response.json()["data"]
         yield from response_json
 
@@ -108,6 +103,7 @@ class ClientMetadata(SproutSocialStream):
     
 class CustomerProfiles(SproutSocialStream):
     primary_key = "customer_profile_id"
+
     """This endpoint retrieves data from the `{customer_id}/metadata/customer` endpoint as a get request.   
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
@@ -126,6 +122,7 @@ class CustomerProfiles(SproutSocialStream):
     
 class CustomerTags(SproutSocialStream):
     primary_key = "tag_id"
+
     """This endpoint retrieves data from the `{customer_id}/metadata/customer/tags` endpoint as a get request.   
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
@@ -144,6 +141,7 @@ class CustomerTags(SproutSocialStream):
     
 class CustomerGroups(SproutSocialStream):
     primary_key = "group_id"
+
     """This endpoint retrieves data from the `{customer_id}/metadata/customer/groups` endpoint as a get request.   
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
@@ -163,6 +161,7 @@ class CustomerGroups(SproutSocialStream):
     
 class CustomerUsers(SproutSocialStream):
     primary_key = "id"
+
     """This endpoint retrieves data from the `{customer_id}/metadata/customer/users` endpoint as a get request.   
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
@@ -179,27 +178,32 @@ class CustomerUsers(SproutSocialStream):
 
         return endpoint
     
-# class CustomerProfileAnalytics(SproutSocialStream):
-#     primary_key = "customer_profile_id"
-#     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
-#     The request needs: 
-#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-#       - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-#       - a json specifically filtered for each `network_type` (aka social media site) 
-#         (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
-#      """
+class ProfileAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+     """
 
-#     def path(
-#         self, stream_state: Mapping[str, Any] = None, 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
-#         endpoint = f"{customer_id}/analytics/profiles"
-#         return endpoint
+    def path(
+        self, stream_state: Mapping[str, Any] = None, 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        data = 
+        endpoint = f"{customer_id}/analytics/profiles"
+
+        return endpoint
     
 # class ProfileAnalytics(SproutSocialStream):
 #     primary_key = "customer_profile_id"
+    
 #     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
 #     The request needs: 
 #       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
