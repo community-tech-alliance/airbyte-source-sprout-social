@@ -53,7 +53,7 @@ class SproutSocialStream(HttpStream, ABC):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> Mapping[str, Any]:
-        return {"Authorization": f"Bearer {self.config['api_key']}" }
+        return {"Authorization": f"Bearer {self.config['api_key']}", 'Content-type': 'application/json'}
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         """Pagination for most endpoints (except messages) is acheived by incrementing `/page/#` in the request URL.
@@ -188,6 +188,57 @@ class ProfileAnalytics(SproutSocialStream):
       - a json specifically filtered for each `network_type` (aka social media site) 
         (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
      """
+    
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+    ) -> Optional[Mapping[str, Any]]:
+        """
+        Override when creating POST/PUT/PATCH requests to populate the body of the request with a JSON payload.
+
+        At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
+        """
+        data = {
+        "fields": [
+            "created_time",
+            "perma_link",
+            "text",
+            "internal.tags.id",
+            "internal.sent_by.id",
+            "internal.sent_by.email",
+            "internal.sent_by.first_name",
+            "internal.sent_by.last_name"
+        ],
+        "filters": [
+            "customer_profile_id.eq(5952806)",
+            "created_time.in(2023-04-06T00:00:00..2023-12-03T23:59:59)"
+        ],
+        "metrics": [
+            "lifetime.likes",
+            "lifetime.reactions",
+            "lifetime.shares_count",
+            "lifetime.comments_count",
+            "lifetime.video_view_time_per_view",
+            "lifetime.video_views_p100_per_view",
+            "lifetime.impression_source_follow",
+            "lifetime.impression_source_for_you",
+            "lifetime.impression_source_hashtag",
+            "lifetime.impression_source_personal_profile",
+            "lifetime.impression_source_sound",
+            "lifetime.impression_source_unspecified",
+            "lifetime.video_view_time",
+            "lifetime.video_views",
+            "lifetime.impressions_unique",
+            "lifetime.impressions",
+            "lifetime.video_views",
+            "video_length"
+        ],
+        "timezone": "America/Chicago",
+        }
+
+        return data
 
     def path(
         self, stream_state: Mapping[str, Any] = None, 
@@ -196,7 +247,7 @@ class ProfileAnalytics(SproutSocialStream):
         **kwargs,
     ) -> str:
         
-        data = 
+        customer_id = self._get_customer_id()
         endpoint = f"{customer_id}/analytics/profiles"
 
         return endpoint
@@ -251,7 +302,7 @@ class SourceSproutSocial(AbstractSource):
         :return Tuple[bool, any]: (True, None) if the input config can be used to connect to the API successfully, (False, error) otherwise.
         """
         connection_url = f"https://api.sproutsocial.com/v1/metadata/client"
-        headers = {'Authorization': f"Bearer {config['api_key']}"}
+        headers = {'Authorization': f"Bearer {config['api_key']}", 'Content-type': 'application/json'}
         try:
             response = requests.get(url=connection_url, headers=headers)
             response.raise_for_status()
@@ -271,7 +322,7 @@ class SourceSproutSocial(AbstractSource):
                 CustomerTags(config=config),
                 CustomerGroups(config=config),
                 CustomerUsers(config=config),
-                # CustomerProfileAnalytics(config=config),
+                ProfileAnalytics(config=config),
                 # ProfileAnalytics(config=config),
                 # PostAnalytics(config=config),]
         ]
