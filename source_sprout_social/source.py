@@ -13,6 +13,9 @@ from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.streams.http.auth import TokenAuthenticator
 from urllib.parse import parse_qsl, urlparse
 import json
+from datetime import date
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 
 # Basic full refresh stream
@@ -28,6 +31,9 @@ class SproutSocialStream(HttpStream, ABC):
         self.config = config
         self.url_base = "https://api.sproutsocial.com/v1/"
         self.page = 1
+        self.current_date = date.today()
+        self.yesterday = self.current_date - timedelta(days = 1)
+        self.year_ago = self.yesterday - timedelta(days = 365)
 
     def _get_customer_id(self):
         """
@@ -179,7 +185,7 @@ class CustomerUsers(SproutSocialStream):
 
         return endpoint
     
-class ProfileAnalytics(SproutSocialStream):
+class TiktokProfileAnalytics(SproutSocialStream):
     primary_key = "permalink"
     http_method = "POST"
     
@@ -204,8 +210,8 @@ class ProfileAnalytics(SproutSocialStream):
         """
         tiktok_analytics_profiles = {
             "filters": [
-                "customer_profile_id.eq(5952806)",
-                "reporting_period.in(2023-01-01...2023-12-05)"
+                "customer_profile_id.eq(5952806, 6025215)",
+                f"reporting_period.in({self.year_ago}...{self.yesterday})"
             ],
             "metrics": [
                 "lifetime_snapshot.followers_count",
@@ -243,7 +249,7 @@ class ProfileAnalytics(SproutSocialStream):
 
     
     
-class PostAnalytics(SproutSocialStream):
+class TiktokPostAnalytics(SproutSocialStream):
     primary_key = "permalink"
     http_method = "POST"
     
@@ -251,7 +257,8 @@ class PostAnalytics(SproutSocialStream):
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
       - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)       
+        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
+        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
       - a json specifically filtered for each `network_type` (aka social media site) 
         (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
      """
@@ -274,8 +281,8 @@ class PostAnalytics(SproutSocialStream):
                 "internal.sent_by.last_name"
             ],
             "filters": [
-                "customer_profile_id.eq(5952806)",
-                "created_time.in(2023-04-06T00:00:00..2023-12-03T23:59:59)"
+                "customer_profile_id.eq(5952806, 6025215)",
+                f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
             ],
             "metrics": [
                 "lifetime.likes",
@@ -313,25 +320,6 @@ class PostAnalytics(SproutSocialStream):
         endpoint = f"{customer_id}/analytics/posts"
         return endpoint
 
-# class PostAnalytics(SproutSocialStream):
-#     primary_key = "customer_profile_id"
-#     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
-#     The request needs: 
-#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-#       - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-#         (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)       
-#       - a json specifically filtered for each `network_type` (aka social media site) 
-#         (in colab notebook, uses `post_api` function and `facebook_analytics_posts`, `instagram_analytics_posts`, and `tiktok_analytics_posts` as json data)       
-#      """
-
-#     def path(
-#         self, stream_state: Mapping[str, Any] = None, 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
-#         endpoint = f"{customer_id}/analytics/posts"
-#         return endpoint
 
 # # Source
 class SourceSproutSocial(AbstractSource):
@@ -352,8 +340,6 @@ class SourceSproutSocial(AbstractSource):
 
     def streams(self, config: Mapping[str, Any]) -> List[Stream]:
         """
-        TODO: Replace the streams below with your own streams.
-
         :param config: A Mapping of the user input configuration as defined in the connector spec.
         """
 
@@ -362,7 +348,7 @@ class SourceSproutSocial(AbstractSource):
                 CustomerTags(config=config),
                 CustomerGroups(config=config),
                 CustomerUsers(config=config),
-                ProfileAnalytics(config=config),
-                # ProfileAnalytics(config=config),
-                PostAnalytics(config=config),]
+                TiktokProfileAnalytics(config=config),
+                TiktokPostAnalytics(config=config),]
+        
         

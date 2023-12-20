@@ -47,7 +47,7 @@
     },
     {
       "stream": {
-        "name": "profile_analytics",
+        "name": "tiktok_profile_analytics",
         "json_schema": {},
         "supported_sync_modes": ["full_refresh"]
       },
@@ -56,7 +56,7 @@
     },
     {
       "stream": {
-        "name": "post_analytics",
+        "name": "tiktok_post_analytics",
         "json_schema": {},
         "supported_sync_modes": ["full_refresh"]
       },
