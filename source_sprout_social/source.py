@@ -12,6 +12,7 @@ from airbyte_cdk.sources.streams import Stream
 from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.streams.http.auth import TokenAuthenticator
 from urllib.parse import parse_qsl, urlparse
+import json
 
 
 # Basic full refresh stream
@@ -74,11 +75,11 @@ class SproutSocialStream(HttpStream, ABC):
         next_page_token: Mapping[str, Any] = None
     ) -> MutableMapping[str, Any]:
         """can probably comment out for prelim testing"""
-        # params = super().request_params(stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
-        # params["PageSize"] = self.page_size
-        # if next_page_token:
-        #     params.update(**next_page_token)
-        # return params
+        params = super().request_params(stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
+        params["PageSize"] = self.page_size
+        if next_page_token:
+            params.update(**next_page_token)
+        return params
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         """
@@ -146,7 +147,7 @@ class CustomerGroups(SproutSocialStream):
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`"""
 
-
+    
     def path(
         self, stream_state: Mapping[str, Any] = None, 
         stream_slice: Mapping[str, Any] = None, 
@@ -200,7 +201,7 @@ class ProfileAnalytics(SproutSocialStream):
 
         At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
         """
-        data = {
+        tiktok_data = {
         "fields": [
             "created_time",
             "perma_link",
@@ -238,10 +239,10 @@ class ProfileAnalytics(SproutSocialStream):
         "timezone": "America/Chicago",
         }
 
-        return data
+        return tiktok_data
 
     def path(
-        self, stream_state: Mapping[str, Any] = None, 
+        self, stream_state: Mapping[str, Any], 
         stream_slice: Mapping[str, Any] = None, 
         next_page_token: Mapping[str, Any] = None,
         **kwargs,
@@ -251,6 +252,15 @@ class ProfileAnalytics(SproutSocialStream):
         endpoint = f"{customer_id}/analytics/profiles"
 
         return endpoint
+    
+    # def post_api(endpoint=f"2055085/analytics/profiles", data=tiktok_data, api_url = 'https://api.sproutsocial.com/'):
+    #     base_url = api_url + endpoint
+    #     token = self.config['api_key']
+    #     data = json.dumps(data)
+    #     headers = {'Authorization': f"Bearer {token}", 'Content-type': 'application/json'}
+
+    #     result = requests.post(base_url, data=data, headers=headers)
+    #     return(result.json())
     
 # class ProfileAnalytics(SproutSocialStream):
 #     primary_key = "customer_profile_id"
