@@ -190,7 +190,7 @@ class ProfileAnalytics(SproutSocialStream):
         (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
      """
     
-    def request_body_json(
+    def request_body_data(
         self,
         stream_state: Optional[Mapping[str, Any]],
         stream_slice: Optional[Mapping[str, Any]] = None,
