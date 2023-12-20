@@ -187,10 +187,11 @@ class ProfileAnalytics(SproutSocialStream):
     The request needs: 
       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
       - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
+      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
      """
     
-    def request_body_data(
+    def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
         stream_slice: Optional[Mapping[str, Any]] = None,
@@ -201,45 +202,32 @@ class ProfileAnalytics(SproutSocialStream):
 
         At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
         """
-        tiktok_data = {
-        "fields": [
-            "created_time",
-            "perma_link",
-            "text",
-            "internal.tags.id",
-            "internal.sent_by.id",
-            "internal.sent_by.email",
-            "internal.sent_by.first_name",
-            "internal.sent_by.last_name"
-        ],
-        "filters": [
-            "customer_profile_id.eq(5952806)",
-            "created_time.in(2023-04-06T00:00:00..2023-12-03T23:59:59)"
-        ],
-        "metrics": [
-            "lifetime.likes",
-            "lifetime.reactions",
-            "lifetime.shares_count",
-            "lifetime.comments_count",
-            "lifetime.video_view_time_per_view",
-            "lifetime.video_views_p100_per_view",
-            "lifetime.impression_source_follow",
-            "lifetime.impression_source_for_you",
-            "lifetime.impression_source_hashtag",
-            "lifetime.impression_source_personal_profile",
-            "lifetime.impression_source_sound",
-            "lifetime.impression_source_unspecified",
-            "lifetime.video_view_time",
-            "lifetime.video_views",
-            "lifetime.impressions_unique",
-            "lifetime.impressions",
-            "lifetime.video_views",
-            "video_length"
-        ],
-        "timezone": "America/Chicago",
-        }
+        tiktok_analytics_profiles = {
+            "filters": [
+                "customer_profile_id.eq(5952806)",
+                "reporting_period.in(2023-01-01...2023-12-05)"
+            ],
+            "metrics": [
+                "lifetime_snapshot.followers_count",
+                "lifetime_snapshot.followers_by_country",
+                "lifetime_snapshot.followers_by_gender",
+                "lifetime_snapshot.followers_online",
+                "net_follower_growth",
+                "impressions",
+                "profile_views_total",
+                "video_views_total"
+                "comments_count_total",
+                "shares_count_total",
+                "likes_total",
+                "posts_sent_count",
+                "posts_sent_by_post_type",
+            ]
+            }
 
-        return tiktok_data
+        return tiktok_analytics_profiles
+    
+    def error_message(self, response: requests.Response) -> str:
+        return response.text
 
     def path(
         self, stream_state: Mapping[str, Any], 
@@ -252,36 +240,78 @@ class ProfileAnalytics(SproutSocialStream):
         endpoint = f"{customer_id}/analytics/profiles"
 
         return endpoint
-    
-    # def post_api(endpoint=f"2055085/analytics/profiles", data=tiktok_data, api_url = 'https://api.sproutsocial.com/'):
-    #     base_url = api_url + endpoint
-    #     token = self.config['api_key']
-    #     data = json.dumps(data)
-    #     headers = {'Authorization': f"Bearer {token}", 'Content-type': 'application/json'}
 
-    #     result = requests.post(base_url, data=data, headers=headers)
-    #     return(result.json())
     
-# class ProfileAnalytics(SproutSocialStream):
-#     primary_key = "customer_profile_id"
     
-#     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
-#     The request needs: 
-#       - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-#       - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-#         (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)       
-#       - a json specifically filtered for each `network_type` (aka social media site) 
-#         (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
-#      """
+class PostAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
+        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)       
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+     """
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+        ) -> Optional[Mapping[str, Any]]:
+        
+        tiktok_analytics_posts = {
+            "fields": [
+                "created_time",
+                "perma_link",
+                "text",
+                "internal.tags.id",
+                "internal.sent_by.id",
+                "internal.sent_by.email",
+                "internal.sent_by.first_name",
+                "internal.sent_by.last_name"
+            ],
+            "filters": [
+                "customer_profile_id.eq(5952806)",
+                "created_time.in(2023-04-06T00:00:00..2023-12-03T23:59:59)"
+            ],
+            "metrics": [
+                "lifetime.likes",
+                "lifetime.reactions",
+                "lifetime.shares_count",
+                "lifetime.comments_count",
+                "lifetime.video_view_time_per_view",
+                "lifetime.video_views_p100_per_view",
+                "lifetime.impression_source_follow",
+                "lifetime.impression_source_for_you",
+                "lifetime.impression_source_hashtag",
+                "lifetime.impression_source_personal_profile",
+                "lifetime.impression_source_sound",
+                "lifetime.impression_source_unspecified",
+                "lifetime.video_view_time",
+                "lifetime.video_views",
+                "lifetime.impressions_unique",
+                "lifetime.impressions",
+                "lifetime.video_views",
+                "video_length"
+            ],
+            "timezone": "America/Chicago",
+            }
+        return tiktok_analytics_posts
 
-#     def path(
-#         self, stream_state: Mapping[str, Any] = None, 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
-#         endpoint = f"{customer_id}/analytics/profiles"
-#         return endpoint
+
+    def path(
+        self, stream_state: Mapping[str, Any] = None, 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/posts"
+        return endpoint
 
 # class PostAnalytics(SproutSocialStream):
 #     primary_key = "customer_profile_id"
@@ -334,5 +364,5 @@ class SourceSproutSocial(AbstractSource):
                 CustomerUsers(config=config),
                 ProfileAnalytics(config=config),
                 # ProfileAnalytics(config=config),
-                # PostAnalytics(config=config),]
-        ]
+                PostAnalytics(config=config),]
+        
