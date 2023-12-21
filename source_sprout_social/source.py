@@ -592,6 +592,148 @@ class FacebookPostAnalytics(SproutSocialStream):
         endpoint = f"{customer_id}/analytics/posts"
         return endpoint
 
+class InstagramProfileAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
+      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
+     """
+    
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+    ) -> Optional[Mapping[str, Any]]:
+        """
+        Override when creating POST/PUT/PATCH requests to populate the body of the request with a JSON payload.
+
+        At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
+        """
+        instagram_analytics_profiles = {
+            "filters": [
+                "customer_profile_id.eq(5931268, 6066491)",
+                f"reporting_period.in({self.year_ago}...{self.yesterday})"
+            ],
+            "metrics": [
+                "lifetime_snapshot.followers_count",
+                "lifetime_snapshot.followers_by_country",
+                "lifetime_snapshot.followers_by_age_gender",
+                "lifetime_snapshot.followers_by_city",
+                "net_follower_growth",
+                "followers_gained",
+                "followers_lost",
+                "lifetime_snapshot.following_count"
+                "impressions",
+                "impressions_unique",
+                "profile_views_unique",
+                "video_views"
+                "reactions",
+                "comments_count",
+                "shares_count",
+                "likes",
+                "saves",
+                "story_replies",
+                "email_contacts",
+                "get_directions_clicks",
+                "phone_call_clicks",
+                "text_message_clicks",
+                "website_clicks",
+                "posts_sent_count",
+                "posts_sent_by_post_type",
+                "posts_sent_by_content_type"
+            ]
+            }
+
+        return instagram_analytics_profiles
+    
+    def error_message(self, response: requests.Response) -> str:
+        return response.text
+
+    def path(
+        self, stream_state: Mapping[str, Any], 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/profiles"
+
+        return endpoint
+
+    
+    
+class InstagramPostAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
+        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
+        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+     """
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+        ) -> Optional[Mapping[str, Any]]:
+        
+        instagram_analytics_posts = {
+            "fields": [
+                "created_time",
+                "perma_link",
+                "text",
+                "internal.tags.id",
+                "internal.sent_by.id",
+                "internal.sent_by.email",
+                "internal.sent_by.first_name",
+                "internal.sent_by.last_name"
+            ],
+            "filters": [
+                "customer_profile_id.eq(5931268, 6066491)",
+                f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
+            ],
+            "metrics": [
+                "lifetime.impressions",
+                "lifetime.impressions_unique",
+                "lifetime.likes",
+                "lifetime.reactions",
+                "lifetime.shares_count",
+                "lifetime.comments_count",
+                "lifetime.saves",
+                "lifetime.story_taps_back",
+                "lifetime.story_taps_forward",
+                "lifetime.story_exits",
+                "lifetime.video_views"
+            ],
+            "timezone": "America/Chicago",
+            }
+        return instagram_analytics_posts
+
+
+
+    def path(
+        self, stream_state: Mapping[str, Any] = None, 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/posts"
+        return endpoint
+
 
 # # Source
 class SourceSproutSocial(AbstractSource):
@@ -623,6 +765,8 @@ class SourceSproutSocial(AbstractSource):
                 TiktokProfileAnalytics(config=config),
                 TiktokPostAnalytics(config=config),
                 FacebookProfileAnalytics(config=config),
-                FacebookPostAnalytics(config=config),]
+                FacebookPostAnalytics(config=config),
+                InstagramProfileAnalytics(config=config),
+                InstagramPostAnalytics(config=config),]
         
         
