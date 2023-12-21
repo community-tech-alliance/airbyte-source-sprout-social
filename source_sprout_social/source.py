@@ -38,7 +38,6 @@ class SproutSocialStream(HttpStream, ABC):
     def _get_customer_id(self):
         """
         Given an API key, make a request to the ClientMetadata endpoint to return the Customer ID. This is required for all other endpoints.
-        ASSUMES ONE CUSTOMER_ID PER API KEY, is that correct @kane? Or does this need to return a list?
 
         This method can be called in streams that require a customer_id, for example when creating a CustomerProfiles stream:
 
@@ -53,6 +52,44 @@ class SproutSocialStream(HttpStream, ABC):
         customer_id = requests.get(client_metadata_url, headers=headers).json()["data"][0]["customer_id"]
 
         return customer_id
+
+    def _get_customer_profile_ids(self):
+        """
+        Given an API key, make a request to the CustomerProfiles endpoint to return the Customer ID. This is required for all `analytics` endpoints .
+
+        This method can be called in streams that require a customer_profile_id, for example when creating a {SocialMediaSite}ProfileAnalytics stream:
+
+        Since this method returns a dictionary, take care to utilize the key when calling it in subsequent functions.
+
+        e.g.
+        site_profile_id = self._get_customer_profile_ids()[{site}]
+        """
+        customer_id = self._get_customer_id()
+        customer_profile_endpoint = f"{customer_id}/metadata/customer"
+        customer_profile_url = self.url_base + customer_profile_endpoint
+        headers = {"Authorization": f"Bearer {self.config['api_key']}" }
+        customer_profiles = requests.get(customer_profile_url, headers=headers).json()["data"]
+
+        facebook_list = []
+        instagram_list = []
+        tiktok_list = []
+        customer_profile_ids = {}
+        for i in range(len(customer_profiles)-1):
+            if customer_profiles[i]["network_type"] == "facebook":
+                facebook_list.append(customer_profiles[i]["customer_profile_id"])
+            elif customer_profiles[i]["network_type"] == "tiktok":
+                tiktok_list.append(customer_profiles[i]["customer_profile_id"])
+            elif customer_profiles[i]["network_type"] == "fb_instagram_account":
+                instagram_list.append(customer_profiles[i]["customer_profile_id"])
+
+        customer_profile_ids["tiktok"] = tiktok_list
+        customer_profile_ids["facebook"] = facebook_list
+        customer_profile_ids["instagram"] = instagram_list
+
+        for list in customer_profile_ids:
+            customer_profile_ids[list] = ','.join([str(element) for element in customer_profile_ids[list]])
+
+        return customer_profile_ids
 
     def request_headers(
         self,
@@ -191,10 +228,11 @@ class TiktokProfileAnalytics(SproutSocialStream):
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
-      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]     
      """
     
     def request_body_json(
@@ -208,9 +246,12 @@ class TiktokProfileAnalytics(SproutSocialStream):
 
         At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
         """
+
+        site_profile_id = self._get_customer_profile_ids()['tiktok']
+
         tiktok_analytics_profiles = {
             "filters": [
-                "customer_profile_id.eq(5952806, 6025215)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"reporting_period.in({self.year_ago}...{self.yesterday})"
             ],
             "metrics": [
@@ -245,19 +286,17 @@ class TiktokProfileAnalytics(SproutSocialStream):
         return endpoint
 
     
-    
 class TiktokPostAnalytics(SproutSocialStream):
     primary_key = "permalink"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
-        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]
      """
     def request_body_json(
         self,
@@ -265,6 +304,8 @@ class TiktokPostAnalytics(SproutSocialStream):
         stream_slice: Optional[Mapping[str, Any]] = None,
         next_page_token: Optional[Mapping[str, Any]] = None,
         ) -> Optional[Mapping[str, Any]]:
+
+        site_profile_id = self._get_customer_profile_ids()['tiktok']
         
         tiktok_analytics_posts = {
             "fields": [
@@ -278,7 +319,7 @@ class TiktokPostAnalytics(SproutSocialStream):
                 "internal.sent_by.last_name"
             ],
             "filters": [
-                "customer_profile_id.eq(5952806, 6025215)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
             ],
             "metrics": [
@@ -323,10 +364,11 @@ class FacebookProfileAnalytics(SproutSocialStream):
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
-      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]     
      """
     
     def request_body_json(
@@ -340,9 +382,11 @@ class FacebookProfileAnalytics(SproutSocialStream):
 
         At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
         """
+        site_profile_id = self._get_customer_profile_ids()['facebook']
+
         facebook_analytics_profiles = {
             "filters": [
-                "customer_profile_id.eq(5931270, 5931271, 6066495)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"reporting_period.in({self.year_ago}...{self.yesterday})"
             ],
             "metrics": [
@@ -460,12 +504,11 @@ class FacebookPostAnalytics(SproutSocialStream):
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
-        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]
      """
     def request_body_json(
         self,
@@ -473,6 +516,8 @@ class FacebookPostAnalytics(SproutSocialStream):
         stream_slice: Optional[Mapping[str, Any]] = None,
         next_page_token: Optional[Mapping[str, Any]] = None,
         ) -> Optional[Mapping[str, Any]]:
+
+        site_profile_id = self._get_customer_profile_ids()['facebook']
         
         facebook_analytics_posts = {
             "fields": [
@@ -486,7 +531,7 @@ class FacebookPostAnalytics(SproutSocialStream):
                 "internal.sent_by.last_name"
             ],
             "filters": [
-                "customer_profile_id.eq(5931270, 5931271, 6066495)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
             ],
             "metrics": [
@@ -598,10 +643,11 @@ class InstagramProfileAnalytics(SproutSocialStream):
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
-      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]    
      """
     
     def request_body_json(
@@ -615,9 +661,11 @@ class InstagramProfileAnalytics(SproutSocialStream):
 
         At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
         """
+        site_profile_id = self._get_customer_profile_ids()['instagram']
+      
         instagram_analytics_profiles = {
             "filters": [
-                "customer_profile_id.eq(5931268, 6066491)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"reporting_period.in({self.year_ago}...{self.yesterday})"
             ],
             "metrics": [
@@ -675,12 +723,11 @@ class InstagramPostAnalytics(SproutSocialStream):
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
     The request needs: 
-      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
-      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
-        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
-        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
-      - a json specifically filtered for each `network_type` (aka social media site) 
-        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]       
      """
     def request_body_json(
         self,
@@ -689,6 +736,8 @@ class InstagramPostAnalytics(SproutSocialStream):
         next_page_token: Optional[Mapping[str, Any]] = None,
         ) -> Optional[Mapping[str, Any]]:
         
+        site_profile_id = self._get_customer_profile_ids()['instagram']
+
         instagram_analytics_posts = {
             "fields": [
                 "created_time",
@@ -701,7 +750,7 @@ class InstagramPostAnalytics(SproutSocialStream):
                 "internal.sent_by.last_name"
             ],
             "filters": [
-                "customer_profile_id.eq(5931268, 6066491)",
+                f"customer_profile_id.eq({site_profile_id})",
                 f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
             ],
             "metrics": [
