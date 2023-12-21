@@ -54,7 +54,7 @@ class SproutSocialStream(HttpStream, ABC):
 
     def _get_customer_profile_ids(self):
         """
-        Given an API key, make a request to the CustomerProfiles endpoint to return the Customer ID. This is required for all `analytics` endpoints .
+        Given an API key, and customer_id, make a request to the CustomerProfiles endpoint to return the Customer ID. This is required for all `analytics` endpoints .
 
         This method can be called in streams that require a customer_profile_id, for example when creating a {SocialMediaSite}ProfileAnalytics stream:
 
