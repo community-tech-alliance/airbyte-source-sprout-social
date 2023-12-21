@@ -231,9 +231,6 @@ class TiktokProfileAnalytics(SproutSocialStream):
             }
 
         return tiktok_analytics_profiles
-    
-    def error_message(self, response: requests.Response) -> str:
-        return response.text
 
     def path(
         self, stream_state: Mapping[str, Any], 
@@ -307,6 +304,281 @@ class TiktokPostAnalytics(SproutSocialStream):
             "timezone": "America/Chicago",
             }
         return tiktok_analytics_posts
+    
+    def path(
+        self, stream_state: Mapping[str, Any], 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/posts"
+
+        return endpoint
+    
+class FacebookProfileAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)
+      - TODO: also needs start and end dates that are input. These are hardcoded right now.     
+     """
+    
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+    ) -> Optional[Mapping[str, Any]]:
+        """
+        Override when creating POST/PUT/PATCH requests to populate the body of the request with a JSON payload.
+
+        At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
+        """
+        facebook_analytics_profiles = {
+            "filters": [
+                "customer_profile_id.eq(5931270, 5931271, 6066495)",
+                f"reporting_period.in({self.year_ago}...{self.yesterday})"
+            ],
+            "metrics": [
+                "lifetime_snapshot.followers_count",
+                "lifetime_snapshot.followers_by_country",
+                "lifetime_snapshot.followers_by_age_gender",
+                "lifetime_snapshot.followers_by_city",
+                "net_follower_growth",
+                "followers_gained",
+                "followers_gained_organic",
+                "followers_gained_paid",
+                "followers_lost",
+                "impressions",
+                "impressions_organic",
+                "impressions_viral",
+                "impressions_nonviral",
+                "impressions_paid",
+                "tab_views",
+                "tab_views_login",
+                "tab_views_logout",
+                "post_impressions",
+                "post_impressions_organic",
+                "post_impressions_viral",
+                "post_impressions_nonviral",
+                "post_impressions_paid",
+                "impressions_unique",
+                "impressions_organic_unique",
+                "impressions_viral_unique",
+                "impressions_nonviral_unique",
+                "impressions_paid_unique",
+                "profile_views",
+                "profile_views_login",
+                "profile_views_logout",
+                "profile_views_login_unique",
+                "reactions",
+                "comments_count",
+                "shares_count",
+                "post_link_clicks",
+                "post_content_clicks_other",
+                "likes",
+                "reactions_love",
+                "reactions_haha",
+                "reactions_wow",
+                "reactions_sad",
+                "reactions_angry",
+                "post_photo_view_clicks",
+                "post_video_play_clicks",
+                "profile_actions",
+                "post_engagements",
+                "cta_clicks_login",
+                "question_answers",
+                "offer_claims",
+                "positive_feedback_other",
+                "event_rsvps",
+                "place_checkins",
+                "place_checkins_mobile",
+                "profile_content_activity",
+                "negative_feedback",
+                "video_views",
+                "video_views_organic",
+                "video_views_paid",
+                "video_views_autoplay",
+                "video_views_click_to_play",
+                "video_views_repeat",
+                "video_view_time",
+                "video_views_unique",
+                "video_views_30s_complete",
+                "video_views_30s_complete_organic",
+                "video_views_30s_complete_paid",
+                "video_views_30s_complete_autoplay",
+                "video_views_30s_complete_click_to_play",
+                "video_views_30s_complete_unique",
+                "video_views_30s_complete_repeat",
+                "video_views_partial",
+                "video_views_partial_organic",
+                "video_views_partial_paid",
+                "video_views_partial_autoplay",
+                "video_views_partial_click_to_play",
+                "video_views_partial_repeat",
+                "video_views_10s",
+                "video_views_10s_organic",
+                "video_views_10s_paid",
+                "video_views_10s_autoplay",
+                "video_views_10s_click_to_play",
+                "video_views_10s_repeat",
+                "video_views_10s_unique",
+                "posts_sent_count",
+                "posts_sent_by_post_type",
+                "posts_sent_by_content_type"
+            ]
+            }
+
+        return facebook_analytics_profiles
+    
+    def error_message(self, response: requests.Response) -> str:
+        return response.text
+
+    def path(
+        self, stream_state: Mapping[str, Any], 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
+        
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/profiles"
+
+        return endpoint
+
+    
+    
+class FacebookPostAnalytics(SproutSocialStream):
+    primary_key = "permalink"
+    http_method = "POST"
+    
+    """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from ClientMetadata returned from from `{json_returned_by_ClientMetadata}['data'][0]['customer_id']`,
+      - a list (but saved as a string) from the `metadata/customer` endpoint based on `network_type` (aka social media site)
+        (in colab notebook these string lists are saved as: `facebook`,`instagram`,`tiktok` and were not created programmatically)
+        TODO: make this programatic. Right now `customer_profile_id` is being fed manually       
+      - a json specifically filtered for each `network_type` (aka social media site) 
+        (in colab notebook, uses `post_api` function and `facebook_analytics_profiles`, `instagram_analytics_profiles`, and `tiktok_analytics_profiles` as json data)       
+     """
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+        ) -> Optional[Mapping[str, Any]]:
+        
+        facebook_analytics_posts = {
+            "fields": [
+                "created_time",
+                "perma_link",
+                "text",
+                "internal.tags.id",
+                "internal.sent_by.id",
+                "internal.sent_by.email",
+                "internal.sent_by.first_name",
+                "internal.sent_by.last_name"
+            ],
+            "filters": [
+                "customer_profile_id.eq(5931270, 5931271, 6066495)",
+                f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
+            ],
+            "metrics": [
+                "lifetime.impressions",
+                "lifetime.impressions_viral",
+                "lifetime.impressions_nonviral",
+                "lifetime.impressions_paid",
+                "lifetime.impressions_follower",
+                "lifetime.impressions_follower_organic",
+                "lifetime.impressions_follower_paid",
+                "lifetime.impressions_nonfollower",
+                "lifetime.impressions_nonfollower_organic",
+                "lifetime.impressions_nonfollower_paid",
+                "lifetime.impressions_unique",
+                "lifetime.impressions_organic_unique",
+                "lifetime.impressions_viral_unique",
+                "lifetime.impressions_nonviral_unique",
+                "lifetime.impressions_paid_unique",
+                "lifetime.impressions_follower_unique",
+                "lifetime.impressions_follower_paid_unique",
+                "lifetime.likes",
+                "lifetime.reactions_love",
+                "lifetime.reactions_haha",
+                "lifetime.reactions_wow",
+                "lifetime.reactions_sad",
+                "lifetime.reactions_angry",
+                "lifetime.shares_count",
+                "lifetime.question_answers",
+                "lifetime.post_content_clicks",
+                "lifetime.post_photo_view_clicks",
+                "lifetime.post_video_play_clicks",
+                "lifetime.post_content_clicks_other",
+                "lifetime.negative_feedback",
+                "lifetime.engagements_unique",
+                "lifetime.engagements_follower_unique",
+                "lifetime.reactions_unique",
+                "lifetime.comments_count_unique",
+                "lifetime.shares_count_unique",
+                "lifetime.question_answers_unique",
+                "lifetime.post_link_clicks_unique",
+                "lifetime.post_content_clicks_unique",
+                "lifetime.post_photo_view_clicks_unique",
+                "lifetime.post_video_play_clicks_unique",
+                "lifetime.post_other_clicks_unique",
+                "lifetime.negative_feedback_unique",
+                "video_length",
+                "lifetime.video_views",
+                "lifetime.video_views_unique",
+                "lifetime.video_views_organic",
+                "lifetime.video_views_organic_unique",
+                "lifetime.video_views_paid",
+                "lifetime.video_views_paid_unique",
+                "lifetime.video_views_autoplay",
+                "lifetime.video_views_click_to_play",
+                "lifetime.video_views_sound_on",
+                "lifetime.video_views_sound_off",
+                "lifetime.video_views_10s",
+                "lifetime.video_views_10s_organic",
+                "lifetime.video_views_10s_paid",
+                "lifetime.video_views_10s_autoplay",
+                "lifetime.video_views_10s_click_to_play",
+                "lifetime.video_views_10s_sound_on",
+                "lifetime.video_views_10s_sound_off",
+                "lifetime.video_views_partial",
+                "lifetime.video_views_partial_organic",
+                "lifetime.video_views_partial_paid",
+                "lifetime.video_views_partial_autoplay",
+                "lifetime.video_views_partial_click_to_play",
+                "lifetime.video_views_30s_complete",
+                "lifetime.video_views_30s_complete_organic",
+                "lifetime.video_views_30s_complete_paid",
+                "lifetime.video_views_30s_complete_autoplay",
+                "lifetime.video_views_30s_complete_click_to_play",
+                "lifetime.video_views_p95",
+                "lifetime.video_views_p95_organic",
+                "lifetime.video_views_p95_paid",
+                "lifetime.video_views_10s_unique",
+                "lifetime.video_views_30s_complete_unique",
+                "lifetime.video_views_p95_paid_unique",
+                "lifetime.video_views_p95_organic_unique",
+                "lifetime.video_view_time_per_view",
+                "lifetime.video_view_time",
+                "lifetime.video_view_time_organic",
+                "lifetime.video_view_time_paid",
+                "lifetime.video_ad_break_impressions",
+                "lifetime.video_ad_break_earnings",
+                "lifetime.video_ad_break_cost_per_impression",
+            ],
+            "timezone": "America/Chicago",
+            }
+        return facebook_analytics_posts
+
 
 
     def path(
@@ -349,6 +621,8 @@ class SourceSproutSocial(AbstractSource):
                 CustomerGroups(config=config),
                 CustomerUsers(config=config),
                 TiktokProfileAnalytics(config=config),
-                TiktokPostAnalytics(config=config),]
+                TiktokPostAnalytics(config=config),
+                FacebookProfileAnalytics(config=config),
+                FacebookPostAnalytics(config=config),]
         
         

@@ -9,7 +9,7 @@
           "type": ["string"]
         },
         "metrics": {
-          "type": ["string"]
+          "type": ["array"]
         }
       }
     }
