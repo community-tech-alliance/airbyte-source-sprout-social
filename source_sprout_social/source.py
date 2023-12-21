@@ -15,7 +15,6 @@ from urllib.parse import parse_qsl, urlparse
 import json
 from datetime import date
 from datetime import timedelta
-from dateutil.relativedelta import relativedelta
 
 
 # Basic full refresh stream
