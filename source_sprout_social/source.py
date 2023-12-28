@@ -350,7 +350,6 @@ class TiktokPostAnalytics(SproutSocialStream):
                 "lifetime.video_views",
                 "lifetime.impressions_unique",
                 "lifetime.impressions",
-                "lifetime.video_views",
                 "video_length"
             ],
             "sort": [
