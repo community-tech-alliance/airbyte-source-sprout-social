@@ -231,7 +231,7 @@ class CustomerUsers(SproutSocialStream):
         return endpoint
     
 class TiktokProfileAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "dimensions"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
@@ -298,7 +298,7 @@ class TiktokProfileAnalytics(SproutSocialStream):
 
     
 class TiktokPostAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "perma_link"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
@@ -371,7 +371,7 @@ class TiktokPostAnalytics(SproutSocialStream):
         return endpoint
     
 class FacebookProfileAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "dimensions"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
@@ -514,7 +514,7 @@ class FacebookProfileAnalytics(SproutSocialStream):
     
     
 class FacebookPostAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "perma_link"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
@@ -655,7 +655,7 @@ class FacebookPostAnalytics(SproutSocialStream):
         return endpoint
 
 class InstagramProfileAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "dimensions"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
@@ -738,7 +738,7 @@ class InstagramProfileAnalytics(SproutSocialStream):
     
     
 class InstagramPostAnalytics(SproutSocialStream):
-    primary_key = "permalink"
+    primary_key = "perma_link"
     http_method = "POST"
     
     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
@@ -805,7 +805,7 @@ class InstagramPostAnalytics(SproutSocialStream):
     
 # TODO: uncomment out class and test
 #class TwitterProfileAnalytics(SproutSocialStream):
-#     primary_key = "permalink"
+#     primary_key = "dimensions"
 #     http_method = "POST"
     
 #     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
@@ -882,7 +882,7 @@ class InstagramPostAnalytics(SproutSocialStream):
 
 # TODO: uncomment out class and test   
 # class TwitterPostAnalytics(SproutSocialStream):
-#     primary_key = "permalink"
+#     primary_key = "perma_link"
 #     http_method = "POST"
     
 #     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
