@@ -5,11 +5,17 @@
         "text": {
           "type": ["string"]
         },
-        "permalink": {
+        "perma_link": {
           "type": ["string"]
         },
         "metrics": {
-          "type": ["array"]
+          "type": ["object"] 
+        },
+        "sent": {
+          "type": ["boolean"]
+        },
+        "created_time": {
+          "type": ["string"]
         }
       }
     }

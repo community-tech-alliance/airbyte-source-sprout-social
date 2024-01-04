@@ -5,7 +5,7 @@
         "group_id": {
           "type": ["string"]
         },
-        "name_group": {
+        "name": {
           "type": ["string"]
         }
       }

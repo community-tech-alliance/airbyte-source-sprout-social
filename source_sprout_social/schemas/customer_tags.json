@@ -6,7 +6,7 @@
           "type": ["string"]
         },
         "any_group": {
-          "type": ["string"]
+          "type": ["boolean"]
         },
         "active": {
           "type": ["boolean"]
