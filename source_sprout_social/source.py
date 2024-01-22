@@ -29,10 +29,10 @@ class SproutSocialStream(HttpStream, ABC):
         super().__init__(**kwargs)
         self.config = config
         self.url_base = "https://api.sproutsocial.com/v1/"
-        self.page = 1
         self.current_date = date.today()
         self.yesterday = self.current_date - timedelta(days = 1)
         self.year_ago = self.yesterday - timedelta(days = 365)
+        self.page = 1
 
     def _get_customer_id(self):
         """
@@ -113,12 +113,6 @@ class SproutSocialStream(HttpStream, ABC):
         Does the response url contain how many pages there will be? Maybe.
         
         This logic was lifted directly from https://github.com/community-tech-alliance/airbyte-source-twilio/blob/main/source_twilio/streams.py """
-        stream_data = response.json()
-        next_page_uri = stream_data.get("next_page_uri")
-        if next_page_uri:
-            next_url = urlparse(next_page_uri)
-            next_page_params = dict(parse_qsl(next_url.query))
-            return next_page_params
 
     def request_params(
         self, stream_state: Mapping[str, Any], 
@@ -525,6 +519,39 @@ class FacebookPostAnalytics(SproutSocialStream):
         - site_profile_id: retrieved from CustomerProfile endpoint 
             site_profile_id = self._get_customer_profile_ids()[{site}]
      """
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.page = 1
+
+        # make an API request to get the total number of pages
+        customer_id = self._get_customer_id()
+        site_profile_id = self._get_customer_profile_ids()['facebook']
+        fb_post_analytics_url = f"https://api.sproutsocial.com/v1/{customer_id}/analytics/posts"
+        headers = {"Authorization": f"Bearer {self.config['api_key']}", "Content-type": "application/json"}
+        get_page_count = {
+          "filters": [
+            f"customer_profile_id.eq({site_profile_id})",
+            f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
+          ],
+          "page": 1
+        }
+        data = json.dumps(get_page_count)
+        response = requests.post(fb_post_analytics_url, data=data, headers=headers).json()
+        self.total_pages = response['paging']['total_pages']
+
+    def next_page_token(
+        self, response: requests.Response
+    ):
+        """
+        Pagination for all endpoints is achieved by incrementing the value of `page` in the request body.
+        """
+
+        if self.page < self.total_pages:
+            self.page += 1
+            return {"page": self.page}
+        
+        
     def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
@@ -638,10 +665,9 @@ class FacebookPostAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
         return facebook_analytics_posts
-
-
 
     def path(
         self, stream_state: Mapping[str, Any] = None, 
