@@ -33,6 +33,38 @@ class SproutSocialStream(HttpStream, ABC):
         self.yesterday = self.current_date - timedelta(days = 1)
         self.year_ago = self.yesterday - timedelta(days = 365)
         self.page = 1
+        self.total_pages = 1 # overridden in child classes with pagination
+
+    def _get_total_pages(self, platform_name, endpoint):
+        """
+        This method is used to get the total number of pages for a given endpoint.
+        """
+
+        site_profile_id = self._get_customer_profile_ids()[platform_name]
+        url = self.url_base + endpoint
+        headers = {"Authorization": f"Bearer {self.config['api_key']}", "Content-type": "application/json"}
+        if "posts" in endpoint:
+            get_page_count = {
+              "filters": [
+                f"customer_profile_id.eq({site_profile_id})",
+                f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
+              ],
+              "page": 1
+            }
+        else:
+            get_page_count = {
+              "filters": [
+                f"customer_profile_id.eq({site_profile_id})",
+                f"reporting_period.in({self.year_ago}...{self.yesterday})"
+              ],
+              "metrics": [
+                "impressions"
+              ],
+              "page": 1
+            }
+        data = json.dumps(get_page_count)
+        total_pages = requests.post(url=url, data=data, headers=headers).json()['paging']['total_pages']
+        return total_pages
 
     def _get_customer_id(self):
         """
@@ -107,13 +139,17 @@ class SproutSocialStream(HttpStream, ABC):
     ) -> Mapping[str, Any]:
         return {"Authorization": f"Bearer {self.config['api_key']}", 'Content-type': 'application/json'}
 
-    def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
-        """Pagination for most endpoints (except messages) is acheived by incrementing `/page/#` in the request URL.
-        
-        Does the response url contain how many pages there will be? Maybe.
-        
-        This logic was lifted directly from https://github.com/community-tech-alliance/airbyte-source-twilio/blob/main/source_twilio/streams.py """
+    def next_page_token(
+        self, response: requests.Response
+    ):
+        """
+        Pagination for all endpoints is achieved by incrementing the value of `page` in the request body.
+        """
 
+        if self.page < self.total_pages:
+            self.page += 1
+            return {"page": self.page}
+            
     def request_params(
         self, stream_state: Mapping[str, Any], 
         stream_slice: Mapping[str, any] = None, 
@@ -137,6 +173,10 @@ class SproutSocialStream(HttpStream, ABC):
 
 class ClientMetadata(SproutSocialStream):
     primary_key = "customer_id"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = 1
 
     def path(
         self, stream_state: Mapping[str, Any] = None, 
@@ -237,6 +277,10 @@ class TiktokProfileAnalytics(SproutSocialStream):
             site_profile_id = self._get_customer_profile_ids()[{site}]     
      """
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="tiktok", endpoint=f"{self._get_customer_id()}/analytics/profiles")
+    
     def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
@@ -303,6 +347,11 @@ class TiktokPostAnalytics(SproutSocialStream):
         - site_profile_id: retrieved from CustomerProfile endpoint 
             site_profile_id = self._get_customer_profile_ids()[{site}]
      """
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="tiktok", endpoint=f"{self._get_customer_id()}/analytics/posts")
+
     def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
@@ -376,6 +425,10 @@ class FacebookProfileAnalytics(SproutSocialStream):
         - site_profile_id: retrieved from CustomerProfile endpoint 
             site_profile_id = self._get_customer_profile_ids()[{site}]     
      """
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="facebook", endpoint=f"{self._get_customer_id()}/analytics/profiles")
     
     def request_body_json(
         self,
@@ -522,35 +575,7 @@ class FacebookPostAnalytics(SproutSocialStream):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.page = 1
-
-        # make an API request to get the total number of pages
-        customer_id = self._get_customer_id()
-        site_profile_id = self._get_customer_profile_ids()['facebook']
-        fb_post_analytics_url = f"https://api.sproutsocial.com/v1/{customer_id}/analytics/posts"
-        headers = {"Authorization": f"Bearer {self.config['api_key']}", "Content-type": "application/json"}
-        get_page_count = {
-          "filters": [
-            f"customer_profile_id.eq({site_profile_id})",
-            f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
-          ],
-          "page": 1
-        }
-        data = json.dumps(get_page_count)
-        response = requests.post(fb_post_analytics_url, data=data, headers=headers).json()
-        self.total_pages = response['paging']['total_pages']
-
-    def next_page_token(
-        self, response: requests.Response
-    ):
-        """
-        Pagination for all endpoints is achieved by incrementing the value of `page` in the request body.
-        """
-
-        if self.page < self.total_pages:
-            self.page += 1
-            return {"page": self.page}
-        
+        self.total_pages = self._get_total_pages(platform_name="facebook", endpoint=f"{self._get_customer_id()}/analytics/posts")
         
     def request_body_json(
         self,
@@ -693,6 +718,10 @@ class InstagramProfileAnalytics(SproutSocialStream):
             site_profile_id = self._get_customer_profile_ids()[{site}]    
      """
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="instagram", endpoint=f"{self._get_customer_id()}/analytics/profiles")
+    
     def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
@@ -775,6 +804,11 @@ class InstagramPostAnalytics(SproutSocialStream):
         - site_profile_id: retrieved from CustomerProfile endpoint 
             site_profile_id = self._get_customer_profile_ids()[{site}]       
      """
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="instagram", endpoint=f"{self._get_customer_id()}/analytics/posts")
+
     def request_body_json(
         self,
         stream_state: Optional[Mapping[str, Any]],
@@ -842,6 +876,11 @@ class InstagramPostAnalytics(SproutSocialStream):
 #         - site_profile_id: retrieved from CustomerProfile endpoint 
 #             site_profile_id = self._get_customer_profile_ids()[{site}]     
 #      """
+    
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/posts")
+        
     
     # def request_body_json(
     #     self,
@@ -919,6 +958,11 @@ class InstagramPostAnalytics(SproutSocialStream):
 #         - site_profile_id: retrieved from CustomerProfile endpoint 
 #             site_profile_id = self._get_customer_profile_ids()[{site}]
 #      """
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/profiles")
+        
+    
 #     def request_body_json(
 #         self,
 #         stream_state: Optional[Mapping[str, Any]],
