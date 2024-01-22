@@ -16,6 +16,21 @@
       },
       "created_time": {
         "type": ["string"]
+      },
+      "internal": {
+        "type": ["object"],
+        "properties": {
+          "tags": {"type": "array"}
+        }
+      },
+      "sent_by": {
+        "type": ["object"],
+        "properties": {
+          "id": {"type": "string"},
+          "email": {"type": "string"},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"}
+        }
       }
     }
   }
