@@ -318,6 +318,7 @@ class TiktokProfileAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
 
         return tiktok_analytics_profiles
@@ -398,6 +399,7 @@ class TiktokPostAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
         return tiktok_analytics_posts
     
@@ -539,6 +541,7 @@ class FacebookProfileAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
 
         return facebook_analytics_profiles
@@ -771,6 +774,7 @@ class InstagramProfileAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
 
         return instagram_analytics_profiles
@@ -849,6 +853,7 @@ class InstagramPostAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
         return instagram_analytics_posts
 
