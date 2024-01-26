@@ -6,7 +6,24 @@
         "type": ["object"]
       },
       "metrics": {
-        "type": ["object"]
+        "type": ["object"],
+        "properties": {
+          "name": {
+            "lifetime_snapshot.followers_count": {"type": "string"},
+            "lifetime_snapshot.followers_by_country": {"type": "object"},
+            "lifetime_snapshot.followers_by_gender": {"type": "object"},
+            "lifetime_snapshot.followers_online": {"type": "string"},
+            "net_follower_growth": {"type": "string"},
+            "impressions": {"type": "string"},
+            "profile_views_total": {"type": "string"},
+            "video_views_total": {"type": "string"},
+            "comments_count_total": {"type": "string"},
+            "shares_count_total": {"type": "string"},
+            "likes_total": {"type": "string"},
+            "posts_sent_count": {"type": "string"},
+            "posts_sent_by_post_type": {"type": "string"}
+        }
     }
   }
+}
 }
