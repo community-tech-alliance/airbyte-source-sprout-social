@@ -95,7 +95,6 @@ class SproutSocialStream(HttpStream, ABC):
         e.g.
         site_profile_id = self._get_customer_profile_ids()[{site}]
 
-        TODO: check CustomerProfiles endpoint for twitter key. Then, uncomment out Twitter vars when Twitter information arrives
         """
         # Retreive CustomerProfile endpoint
         customer_id = self._get_customer_id()
@@ -997,9 +996,9 @@ class TwitterPostAnalytics(SproutSocialStream):
                 "lifetime.reactions",
                 "lifetime.likes",
                 "lifetime.comments_count",
-                # "profile_views_total",
-                # "lifetime.post_links_clicks",
+                "lifetime.shares_count",
                 "lifetime.post_content_clicks",
+                "lifetime.post_link_clicks",
                 "lifetime.post_content_clicks_other",
                 "lifetime.post_media_clicks",
                 "lifetime.post_hashtag_clicks",
@@ -1010,8 +1009,7 @@ class TwitterPostAnalytics(SproutSocialStream):
                 "lifetime.post_followers_lost",
                 "lifetime.post_app_engagements",
                 "lifetime.post_app_installs",
-                "lifetime.post_app_opens",
-                "lifetime.shares_count"
+                "lifetime.post_app_opens"
             ],
             "sort": [
                 "created_time:asc"
@@ -1065,7 +1063,6 @@ class SourceSproutSocial(AbstractSource):
                 FacebookPostAnalytics(config=config),
                 InstagramProfileAnalytics(config=config),
                 InstagramPostAnalytics(config=config),
-                #TODO: create Twitter profile and post schemas, add to integration_tests/configured_catalog.json and uncomment out these streams
                 TwitterProfileAnalytics(config=config),
                 TwitterPostAnalytics(config=config),
                 ]
