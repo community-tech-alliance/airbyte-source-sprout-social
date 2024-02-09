@@ -6,7 +6,37 @@
           "type": ["object"]
         },
         "metrics": {
-          "type": ["object"]
+          "type": ["object"],
+          "properties": {
+            "name": {
+              "lifetime_snapshot.followers_count": {"type": "string"},
+              "lifetime_snapshot.followers_by_country": {"type": "object"},
+              "lifetime_snapshot.followers_by_age_gender": {"type": "object"},
+              "lifetime_snapshot.followers_by_city": {"type": "object"},
+              "net_follower_growth": {"type": "string"},
+              "followers_gained": {"type": "string"},
+              "followers_lost": {"type": "string"},
+              "lifetime_snapshot.following_count": {"type": "string"},
+              "impressions": {"type": "string"},
+              "impressions_unique": {"type": "string"},
+              "profile_views_unique": {"type": "string"},
+              "video_views": {"type": "string"},
+              "reactions": {"type": "string"},
+              "comments_count": {"type": "string"},
+              "shares_count": {"type": "string"},
+              "likes": {"type": "string"},
+              "saves": {"type": "string"},
+              "story_replies": {"type": "string"},
+              "email_contacts": {"type": "string"},
+              "get_directions_clicks": {"type": "string"},
+              "phone_call_clicks": {"type": "string"},
+              "text_message_clicks": {"type": "string"},
+              "website_clicks": {"type": "string"},
+              "posts_sent_count": {"type": "string"},
+              "posts_sent_by_post_type": {"type": "string"},
+              "posts_sent_by_content_type": {"type": "string"}
+            }
+          }
       }
     }
 }

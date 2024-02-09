@@ -6,7 +6,32 @@
         "type": ["object"]
       },
       "metrics": {
-        "type": ["object"]
+        "type": ["object"],
+        "properties": {
+          "lifetime_snapshot.followers_count": {"type": "string"},
+          "net_follower_growth": {"type": "string"},
+          "impressions": {"type": "string"},
+          "post_media_views": {"type": "string"},
+          "video_views": {"type": "string"},
+          "reactions": {"type": "string"},
+          "likes": {"type": "string"},
+          "comments_count": {"type": "string"},
+          "shares_count": {"type": "string"},
+          "post_link_clicks": {"type": "string"},
+          "post_content_clicks": {"type": "string"},
+          "post_content_clicks_other": {"type": "string"},
+          "post_media_clicks": {"type": "string"},
+          "post_hashtag_clicks": {"type": "string"},
+          "post_detail_expand_clicks": {"type": "string"},
+          "post_profile_clicks": {"type": "string"},
+          "engagements_other": {"type": "string"},
+          "post_app_engagements": {"type": "string"},
+          "post_app_installs": {"type": "string"},
+          "post_app_opens": {"type": "string"},
+          "post_sent_count": {"type": "string"},
+          "post_sent_by_post_type": {"type": "string"},
+          "post_sent_by_content_type": {"type": "string"}
+          }
+        }
     }
   }
-}
