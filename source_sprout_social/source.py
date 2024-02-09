@@ -363,6 +363,7 @@ class TiktokPostAnalytics(SproutSocialStream):
         
         tiktok_analytics_posts = {
             "fields": [
+                "customer_profile_id",
                 "created_time",
                 "perma_link",
                 "text",
@@ -590,6 +591,7 @@ class FacebookPostAnalytics(SproutSocialStream):
         
         facebook_analytics_posts = {
             "fields": [
+                "customer_profile_id",
                 "created_time",
                 "perma_link",
                 "text",
@@ -823,6 +825,7 @@ class InstagramPostAnalytics(SproutSocialStream):
 
         instagram_analytics_posts = {
             "fields": [
+                "customer_profile_id",
                 "created_time",
                 "perma_link",
                 "text",
@@ -976,6 +979,7 @@ class TwitterPostAnalytics(SproutSocialStream):
         
         twitter_analytics_posts = {
             "fields": [
+                "customer_profile_id",
                 "created_time",
                 "perma_link",
                 "text",
