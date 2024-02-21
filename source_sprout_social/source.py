@@ -95,7 +95,6 @@ class SproutSocialStream(HttpStream, ABC):
         e.g.
         site_profile_id = self._get_customer_profile_ids()[{site}]
 
-        TODO: check CustomerProfiles endpoint for twitter key. Then, uncomment out Twitter vars when Twitter information arrives
         """
         # Retreive CustomerProfile endpoint
         customer_id = self._get_customer_id()
@@ -108,7 +107,7 @@ class SproutSocialStream(HttpStream, ABC):
         facebook_list = []
         instagram_list = []
         tiktok_list = []
-        # twitter_list = []
+        twitter_list = []
         customer_profile_ids = {}
         for i in range(len(customer_profiles)-1):
             if customer_profiles[i]["network_type"] == "facebook":
@@ -117,13 +116,13 @@ class SproutSocialStream(HttpStream, ABC):
                 tiktok_list.append(customer_profiles[i]["customer_profile_id"])
             elif customer_profiles[i]["network_type"] == "fb_instagram_account":
                 instagram_list.append(customer_profiles[i]["customer_profile_id"])
-            # elif customer_profiles[i]["network_type"] == "twitter":
-            #     twitter_list.append(customer_profiles[i]["customer_profile_id"])
+            elif customer_profiles[i]["network_type"] == "twitter":
+                twitter_list.append(customer_profiles[i]["customer_profile_id"])
 
         customer_profile_ids["tiktok"] = tiktok_list
         customer_profile_ids["facebook"] = facebook_list
         customer_profile_ids["instagram"] = instagram_list
-        # customer_profile_ids["twitter"] = twitter_list
+        customer_profile_ids["twitter"] = twitter_list
 
         # Convert lists to strings
         for list in customer_profile_ids:
@@ -871,171 +870,168 @@ class InstagramPostAnalytics(SproutSocialStream):
         endpoint = f"{customer_id}/analytics/posts"
         return endpoint
     
-# TODO: uncomment out class and test
-#class TwitterProfileAnalytics(SproutSocialStream):
-#     primary_key = "dimensions"
-#     http_method = "POST"
+class TwitterProfileAnalytics(SproutSocialStream):
+    primary_key = "dimensions"
+    http_method = "POST"
     
-#     """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
-#     The request needs: 
-#       - a customer_id from _get_customer_id(),
-#       - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
-#         - dates: spanning from `year_ago` to `yesterday` 
-#         - site_profile_id: retrieved from CustomerProfile endpoint 
-#             site_profile_id = self._get_customer_profile_ids()[{site}]     
-#      """
+    """This endpoint retrieves data from the `analytics/profiles` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]     
+     """
     
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/posts")
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/posts")
         
     
-    # def request_body_json(
-    #     self,
-    #     stream_state: Optional[Mapping[str, Any]],
-    #     stream_slice: Optional[Mapping[str, Any]] = None,
-    #     next_page_token: Optional[Mapping[str, Any]] = None,
-    # ) -> Optional[Mapping[str, Any]]:
-    #     """
-    #     Override when creating POST/PUT/PATCH requests to populate the body of the request with a JSON payload.
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+    ) -> Optional[Mapping[str, Any]]:
+        """
+        Override when creating POST/PUT/PATCH requests to populate the body of the request with a JSON payload.
 
-    #     At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
-    #     """
+        At the same time only one of the 'request_body_data' and 'request_body_json' functions can be overridden.
+        """
 
-    #     site_profile_id = self._get_customer_profile_ids()['twitter']
+        site_profile_id = self._get_customer_profile_ids()['twitter']
 
-    #     twitter_analytics_profiles = {
-    #         "filters": [
-    #             f"customer_profile_id.eq({site_profile_id})",
-    #             f"reporting_period.in({self.year_ago}...{self.yesterday})"
-    #         ],
-    #         "metrics": [
-    #             "lifetime_snapshot.followers_count",
-    #             "net_follower_growth",
-    #             "impressions",
-    #             "post_media_views",
-    #             "video_views",
-    #             "reactions",
-    #             "likes",
-    #             "comments_count",
-    #             "shares_count",
-    #             "post_link_clicks",
-    #             "post_content_clicks",
-    #             "post_content_clicks_other",
-    #             "post_media_clicks",
-    #             "post_hashtag_clicks",
-    #             "post_detail_expand_clicks",
-    #             "post_profile_clicks",
-    #             "engagements_other",
-    #             "post_app_engagements",
-    #             "post_app_installs",
-    #             "post_app_opens",
-    #             "post_sent_count",
-    #             "post_sent_by_post_type",
-    #             "post_sent_by_content_type",
-    #         ],
-#             "sort": [
-#                 "created_time:asc"
-#             ],
-#             }
+        twitter_analytics_profiles = {
+            "filters": [
+                f"customer_profile_id.eq({site_profile_id})",
+                f"reporting_period.in({self.year_ago}...{self.yesterday})"
+            ],
+            "metrics": [
+                "lifetime_snapshot.followers_count",
+                "net_follower_growth",
+                "impressions",
+                "post_media_views",
+                "video_views",
+                "reactions",
+                "likes",
+                "comments_count",
+                "shares_count",
+                "post_link_clicks",
+                "post_content_clicks",
+                "post_content_clicks_other",
+                "post_media_clicks",
+                "post_hashtag_clicks",
+                "post_detail_expand_clicks",
+                "post_profile_clicks",
+                "engagements_other",
+                "post_app_engagements",
+                "post_app_installs",
+                "post_app_opens",
+                "post_sent_count",
+                "post_sent_by_post_type",
+                "post_sent_by_content_type",
+            ],
+            "sort": [
+                "created_time:asc"
+            ],
+            }
 
-#         return twitter_analytics_profiles
+        return twitter_analytics_profiles
 
-    # def path(
-    #     self, stream_state: Mapping[str, Any], 
-    #     stream_slice: Mapping[str, Any] = None, 
-    #     next_page_token: Mapping[str, Any] = None,
-    #     **kwargs,
-    # ) -> str:
+    def path(
+        self, stream_state: Mapping[str, Any], 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
         
-    #     customer_id = self._get_customer_id()
-    #     endpoint = f"{customer_id}/analytics/profiles"
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/profiles"
 
-    #     return endpoint
+        return endpoint
 
-# TODO: uncomment out class and test   
-# class TwitterPostAnalytics(SproutSocialStream):
-#     primary_key = "perma_link"
-#     http_method = "POST"
+class TwitterPostAnalytics(SproutSocialStream):
+    primary_key = "perma_link"
+    http_method = "POST"
     
-#     """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
-#     The request needs: 
-#       - a customer_id from _get_customer_id(),
-#       - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
-#         - dates: spanning from `year_ago` to `yesterday` 
-#         - site_profile_id: retrieved from CustomerProfile endpoint 
-#             site_profile_id = self._get_customer_profile_ids()[{site}]
-#      """
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/profiles")
+    """This endpoint retrieves data from the `analytics/posts` endpoint as a post request.   
+    The request needs: 
+      - a customer_id from _get_customer_id(),
+      - a json specifically filtered for each `network_type` (aka social media site) including the following vars:
+        - dates: spanning from `year_ago` to `yesterday` 
+        - site_profile_id: retrieved from CustomerProfile endpoint 
+            site_profile_id = self._get_customer_profile_ids()[{site}]
+     """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/profiles")
         
     
-#     def request_body_json(
-#         self,
-#         stream_state: Optional[Mapping[str, Any]],
-#         stream_slice: Optional[Mapping[str, Any]] = None,
-#         next_page_token: Optional[Mapping[str, Any]] = None,
-#         ) -> Optional[Mapping[str, Any]]:
+    def request_body_json(
+        self,
+        stream_state: Optional[Mapping[str, Any]],
+        stream_slice: Optional[Mapping[str, Any]] = None,
+        next_page_token: Optional[Mapping[str, Any]] = None,
+        ) -> Optional[Mapping[str, Any]]:
 
-#         site_profile_id = self._get_customer_profile_ids()['tiktok']
+        site_profile_id = self._get_customer_profile_ids()['tiktok']
         
-#         twitter_analytics_posts = {
-#             "fields": [
-#                 "customer_profile_id",
-#                 "created_time",
-#                 "perma_link",
-#                 "text",
-#                 "internal.tags.id",
-#                 "internal.sent_by.id",
-#                 "internal.sent_by.email",
-#                 "internal.sent_by.first_name",
-#                 "internal.sent_by.last_name"
-#             ],
-#             "filters": [
-#                 f"customer_profile_id.eq({site_profile_id})",
-#                 f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
-#             ],
-#             "metrics": [
-#                 "lifetime.impressions",
-#                 "lifetime.post_media_views",
-#                 "lifetime.video_views",
-#                 "lifetime.reactions",
-#                 "lifetime.likes",
-#                 "lifetime.comments_count",
-#                 "profile_views_total",
-#                 "lifetime.post_links_clicks",
-#                 "lifetime.post_content_clicks",
-#                 "lifetime.post_content_clicks_other",
-#                 "lifetime.post_media_clicks",
-#                 "lifetime.post_hashtag_clicks",
-#                 "lifetime.post_detail_expand_clicks",
-#                 "lifetime.post_profile_clicks",
-#                 "lifetime.engagements_other",
-#                 "lifetime.post_followers_gained",
-#                 "lifetime.post_followers_lost",
-#                 "lifetime.post_app_engagements",
-#                 "lifetime.post_app_installs",
-#                 "lifetime.post_app_opens",
-#                 "lifetime.shares_count"
-#             ],
-#             "sort": [
-#                 "created_time:asc"
-#             ],
-#             }
-#         return twitter_analytics_posts
+        twitter_analytics_posts = {
+            "fields": [
+                "customer_profile_id",
+                "created_time",
+                "perma_link",
+                "text",
+                "internal.tags.id",
+                "internal.sent_by.id",
+                "internal.sent_by.email",
+                "internal.sent_by.first_name",
+                "internal.sent_by.last_name"
+            ],
+            "filters": [
+                f"customer_profile_id.eq({site_profile_id})",
+                f"created_time.in({self.year_ago}T00:00:00..{self.yesterday}T23:59:59)"
+            ],
+            "metrics": [
+                "lifetime.impressions",
+                "lifetime.post_media_views",
+                "lifetime.video_views",
+                "lifetime.reactions",
+                "lifetime.likes",
+                "lifetime.comments_count",
+                "lifetime.shares_count",
+                "lifetime.post_content_clicks",
+                "lifetime.post_link_clicks",
+                "lifetime.post_content_clicks_other",
+                "lifetime.post_media_clicks",
+                "lifetime.post_hashtag_clicks",
+                "lifetime.post_detail_expand_clicks",
+                "lifetime.post_profile_clicks",
+                "lifetime.engagements_other",
+                "lifetime.post_followers_gained",
+                "lifetime.post_followers_lost",
+                "lifetime.post_app_engagements",
+                "lifetime.post_app_installs",
+                "lifetime.post_app_opens"
+            ],
+            "sort": [
+                "created_time:asc"
+            ],
+            }
+        return twitter_analytics_posts
     
-#     def path(
-#         self, stream_state: Mapping[str, Any], 
-#         stream_slice: Mapping[str, Any] = None, 
-#         next_page_token: Mapping[str, Any] = None,
-#         **kwargs,
-#     ) -> str:
+    def path(
+        self, stream_state: Mapping[str, Any], 
+        stream_slice: Mapping[str, Any] = None, 
+        next_page_token: Mapping[str, Any] = None,
+        **kwargs,
+    ) -> str:
         
-#         customer_id = self._get_customer_id()
-#         endpoint = f"{customer_id}/analytics/posts"
+        customer_id = self._get_customer_id()
+        endpoint = f"{customer_id}/analytics/posts"
 
-#         return endpoint
+        return endpoint
 
 
 # # Source
@@ -1071,9 +1067,8 @@ class SourceSproutSocial(AbstractSource):
                 FacebookPostAnalytics(config=config),
                 InstagramProfileAnalytics(config=config),
                 InstagramPostAnalytics(config=config),
-                #TODO: create Twitter profile and post schemas, add to integration_tests/configured_catalog.json and uncomment out these streams
-                # TwitterProfileAnalytics(config=config),
-                # TwitterPostAnalytics(config=config),
+                TwitterProfileAnalytics(config=config),
+                TwitterPostAnalytics(config=config),
                 ]
         
         
