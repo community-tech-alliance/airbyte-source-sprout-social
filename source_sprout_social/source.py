@@ -975,7 +975,7 @@ class TwitterPostAnalytics(SproutSocialStream):
         next_page_token: Optional[Mapping[str, Any]] = None,
         ) -> Optional[Mapping[str, Any]]:
 
-        site_profile_id = self._get_customer_profile_ids()['tiktok']
+        site_profile_id = self._get_customer_profile_ids()['twitter']
         
         twitter_analytics_posts = {
             "fields": [
