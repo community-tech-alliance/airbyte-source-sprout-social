@@ -935,6 +935,7 @@ class TwitterProfileAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
 
         return twitter_analytics_profiles
@@ -1018,6 +1019,7 @@ class TwitterPostAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
         return twitter_analytics_posts
     
