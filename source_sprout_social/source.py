@@ -885,7 +885,7 @@ class TwitterProfileAnalytics(SproutSocialStream):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/posts")
+        self.total_pages = self._get_total_pages(platform_name="twitter", endpoint=f"{self._get_customer_id()}/analytics/profiles")
         
     
     def request_body_json(
@@ -935,6 +935,7 @@ class TwitterProfileAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
 
         return twitter_analytics_profiles
@@ -1018,6 +1019,7 @@ class TwitterPostAnalytics(SproutSocialStream):
             "sort": [
                 "created_time:asc"
             ],
+            "page": self.page
             }
         return twitter_analytics_posts
     
